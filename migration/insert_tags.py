@@ -33,6 +33,6 @@ with closing(sqlite3.connect("database.db")) as connection:
         except:
             pass    # 何もしない
 
-    query = "insert into tags (name) select ? from tags where not exists (select 1 from tags where name=?);"
+    query = "insert into tags (name) select ? where not exists (select 1 from tags where name=?);"
     c.executemany(query, place_holder)
     connection.commit()
