@@ -333,3 +333,10 @@ ASALocalRun/
 # Local History for Visual Studio
 .localhistory/
 migration/database.db
+*.tlog
+*.idb
+*.exe
+*.exp
+*.lib
+Vulcan/Vulcan/App/AS_DEBUG/stats.txt
+Vulcan/Vulcan/App/Vulcan(debug_32-bit)_log.html
