@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include "RichIO.h"
 
 int main()
 {
