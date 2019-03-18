@@ -10,6 +10,8 @@ namespace vlc
 	{
 		typedef std::vector<FileInfo> FileInfoArray;
 		typedef std::vector<void*> BinrayArray;
+		typedef std::vector<FILE*> FileArray;
+		
 		
 		/**
 		* ファイル情報を扱うための構造体
@@ -40,6 +42,16 @@ namespace vlc
 		class RichIO
 		{
 			const std::string filePath;
+
+			void* buffer;
+			uint64_t bufsize;
+
+		private:
+			void AllocCheck(const uint64_t infosize);
+
+			FILE* FileOpen(const uint64_t size, const char* mode);
+			FILE* GetFileOne(const FileInfo& info, const char* mode);
+			FILE* GetFileMany(const FileInfoArray& infos, const char* mode);
 
 		public:
 			RichIO(const std::string path);
