@@ -120,6 +120,9 @@ void vlc::rio::RichIO::WriteRealSize(FILE * fp)
 // ファイルから適当なバイナリをbufferへ読み込む
 void vlc::rio::RichIO::ReadBinary(FileInfo & info, FILE * fp)
 {
+	if (info.offset + info.size > realsize)
+		throw new ReadingOverloadException(info, realsize);
+
 	info.buffer = malloc(info.size);
 	_fseeki64_nolock(fp, info.offset, SEEK_SET);
 	_fread_nolock_s(info.buffer, info.size, info.size, 1, fp);
@@ -167,4 +170,13 @@ void vlc::rio::RichIO::Read(FileInfoArray & infos)
 		ReadBinary(info, fp);
 
 	fclose(fp);
+}
+
+vlc::rio::ReadingOverloadException::ReadingOverloadException(const FileInfo & info, const DataInt total)
+	: exception(
+		(std::string() + "(offset, size, realsize) = (" + 
+			std::to_string(info.offset) + "," + 
+			std::to_string(info.size) + "," +
+			std::to_string(total) + ")").c_str())
+{
 }

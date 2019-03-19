@@ -14,6 +14,15 @@ namespace vlc
 		typedef std::vector<void*> BinrayArray;
 		typedef std::vector<FILE*> FileArray;
 		typedef long long DataInt;
+
+		/**
+		* 読み込んだときにoffsetとsizeの間で内部容量との不整合を起こした
+		*/
+		class ReadingOverloadException : std::exception 
+		{
+		public:
+			ReadingOverloadException(const FileInfo& info, const DataInt total);
+		};
 		
 		/**
 		* ファイル情報を扱うための構造体
@@ -36,8 +45,6 @@ namespace vlc
 
 			static FileInfo ToRead(const DataInt offset, const DataInt size);
 		};
-
-		
 
 		/**
 		* 贅沢な読み書きを提供する
