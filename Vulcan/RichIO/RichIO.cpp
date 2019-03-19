@@ -71,11 +71,29 @@ vlc::rio::RichIO::RichIO(const std::string path)
 	: filePath(path), bufsize(1)
 {
 	buffer = malloc(bufsize);
+
+	FILE* fp = fopen(filePath.c_str(), "ab");
+	_fseek_nolock(fp, 0, SEEK_SET);
+	_fread_nolock_s(&realsize, sizeof(realsize), sizeof(realsize), 1, fp);	// 先頭8バイトでファイルの実際のサイズがわかる
+	fclose(fp);
 }
 
 void vlc::rio::RichIO::Write(FileInfo & info)
 {
 	FILE* fp = GetFileOne(info, "ab");
+
+	info.offset = realsize;
+	realsize += info.size;
+
+	filesize = _fseeki64_nolock(fp, 0, SEEK_END);
+	if (realsize > filesize)
+	{
+		// 内部サイズがファイルサイズを超えた場合、ファイルサイズを2倍にする
+		
+	}
+	
+	_fseeki64_nolock(fp, realsize, SEEK_SET);
+	_fwrite_nolock(info.binary, info.size, 1, fp);
 
 	fclose(fp);
 }

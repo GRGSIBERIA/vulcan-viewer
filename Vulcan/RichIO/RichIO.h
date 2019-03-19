@@ -46,6 +46,9 @@ namespace vlc
 			void* buffer;
 			uint64_t bufsize;
 
+			uint64_t realsize;	// 内部的なファイルサイズ
+			uint64_t filesize;	// 実ファイルのサイズ
+
 		private:
 			void AllocCheck(const uint64_t infosize);
 
@@ -62,7 +65,7 @@ namespace vlc
 
 			void Read(FileInfo& info);
 
-			void Read(FileInfoArray& infos)
+			void Read(FileInfoArray& infos);
 		};
 	}
 }
