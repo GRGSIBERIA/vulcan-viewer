@@ -43,18 +43,17 @@ namespace vlc
 		{
 			const std::string filePath;
 
-			void* buffer;
-			uint64_t bufsize;
-
 			uint64_t realsize;	// 内部的なファイルサイズ
 			uint64_t filesize;	// 実ファイルのサイズ
 
 		private:
-			void AllocCheck(const uint64_t infosize);
+			void WriteBinary(FileInfo& info, FILE* fp);
+			void WriteRealSize(FILE* fp);
 
 			FILE* FileOpen(const uint64_t size, const char* mode);
 			FILE* GetFileOne(const FileInfo& info, const char* mode);
 			FILE* GetFileMany(const FileInfoArray& infos, const char* mode);
+			void CheckOverSize(FILE* fp);
 
 		public:
 			RichIO(const std::string path);
