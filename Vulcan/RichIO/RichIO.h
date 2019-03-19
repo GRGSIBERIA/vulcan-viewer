@@ -8,10 +8,12 @@ namespace vlc
 {
 	namespace rio
 	{
+		struct FileInfo;
+
 		typedef std::vector<FileInfo> FileInfoArray;
 		typedef std::vector<void*> BinrayArray;
 		typedef std::vector<FILE*> FileArray;
-		
+		typedef long long DataInt;
 		
 		/**
 		* ファイル情報を扱うための構造体
@@ -19,19 +21,20 @@ namespace vlc
 		*/
 		struct FileInfo
 		{
-			const void* binary;	// バイナリへのポインタ
-			uint64_t offset;	// オフセット
-			uint64_t size;		// サイズ
+			void* buffer;	// バイナリへのポインタ
+			DataInt offset;	// オフセット
+			DataInt size;		// サイズ
 
-			FileInfo(const void* binary, const uint64_t offset, const uint64_t size);
+			FileInfo(void* buffer, const DataInt offset, const DataInt size);
 
 			FileInfo();
+			~FileInfo();
 
 			FileInfo& operator=(FileInfo& info);
 
-			static FileInfo ToWrite(const void* binary, const uint64_t size);
+			static FileInfo ToWrite(void* buffer, const DataInt size);
 
-			static FileInfo ToRead(const uint64_t offset, const uint64_t size);
+			static FileInfo ToRead(const DataInt offset, const DataInt size);
 		};
 
 		
@@ -43,14 +46,15 @@ namespace vlc
 		{
 			const std::string filePath;
 
-			uint64_t realsize;	// 内部的なファイルサイズ
-			uint64_t filesize;	// 実ファイルのサイズ
+			DataInt realsize;	// 内部的なファイルサイズ
+			DataInt filesize;	// 実ファイルのサイズ
 
 		private:
 			void WriteBinary(FileInfo& info, FILE* fp);
 			void WriteRealSize(FILE* fp);
+			void ReadBinary(FileInfo& info, FILE* fp);
 
-			FILE* FileOpen(const uint64_t size, const char* mode);
+			FILE* FileOpen(const DataInt size, const char* mode);
 			FILE* GetFileOne(const FileInfo& info, const char* mode);
 			FILE* GetFileMany(const FileInfoArray& infos, const char* mode);
 			void CheckOverSize(FILE* fp);

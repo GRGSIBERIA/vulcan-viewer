@@ -1,34 +1,40 @@
 ﻿#include "RichIO.h"
 using namespace vlc::rio;
 
-vlc::rio::FileInfo::FileInfo(const void* binary, const uint64_t offset, const uint64_t size)
-	: offset(offset), size(size), binary(binary)
+vlc::rio::FileInfo::FileInfo(void* buffer, const DataInt offset, const DataInt size)
+	: offset(offset), size(size), buffer(buffer)
 {
 }
 
 vlc::rio::FileInfo::FileInfo()
-	: offset(0), size(0), binary(nullptr)
+	: offset(0), size(0), buffer(nullptr)
 {
+}
+
+vlc::rio::FileInfo::~FileInfo()
+{
+	if (buffer != nullptr)
+		free(buffer);
 }
 
 FileInfo & vlc::rio::FileInfo::operator=(FileInfo & info)
 {
-	binary = info.binary;
+	buffer = info.buffer;
 	offset = info.offset;
 	size = info.size;
 }
 
-FileInfo vlc::rio::FileInfo::ToWrite(const void * binary, const uint64_t size)
+FileInfo vlc::rio::FileInfo::ToWrite(void * buffer, const DataInt size)
 {
-	return FileInfo(binary, 0, size);
+	return FileInfo(buffer, 0, size);
 }
 
-FileInfo vlc::rio::FileInfo::ToRead(const uint64_t offset, const uint64_t size)
+FileInfo vlc::rio::FileInfo::ToRead(const DataInt offset, const DataInt size)
 {
 	return FileInfo(nullptr, offset, size);
 }
 
-FILE * vlc::rio::RichIO::FileOpen(const uint64_t size, const char * mode)
+FILE * vlc::rio::RichIO::FileOpen(const DataInt size, const char * mode)
 {
 	// setvbufにNULLを指定すると自動的に容量を確保する
 	// その代わりファイルを開くたびにmallocされるが
@@ -48,7 +54,7 @@ FILE* vlc::rio::RichIO::GetFileOne(const FileInfo& info, const char* mode)
 // 複数のファイル情報を読み込んで一気にsetvbufする関数
 FILE* vlc::rio::RichIO::GetFileMany(const FileInfoArray & infos, const char * mode)
 {
-	uint64_t total = 0;
+	DataInt total = 0;
 	for (int i = 0; i < infos.size(); ++i)
 		total += infos[i].size;
 
@@ -57,13 +63,14 @@ FILE* vlc::rio::RichIO::GetFileMany(const FileInfoArray & infos, const char * mo
 
 void vlc::rio::RichIO::CheckOverSize(FILE* fp)
 {
-	// 内部サイズがファイルサイズを超えた場合、ファイルサイズを増やす
+	// 内部サイズがファイルサイズを超えたらファイルサイズを増やす
 	filesize = _fseeki64_nolock(fp, 0, SEEK_END);
 	while (realsize > filesize)
 	{
 		const auto temp = filesize;
 		filesize = filesize * 1.5;
 
+		// 適当に空のバッファを用意してファイルに書き込む
 		const auto allocsize = filesize - temp;
 		void* allocation = malloc(allocsize);
 		memset(allocation, 0, allocsize);
@@ -83,12 +90,12 @@ vlc::rio::RichIO::RichIO(const std::string path)
 	auto size = _fseeki64_nolock(fp, 0, SEEK_END);
 	if (size <= 0)
 	{
-		realsize = sizeof(uint64_t);
+		realsize = sizeof(DataInt);
 		WriteRealSize(fp);
 	}
 
 	_fseek_nolock(fp, 0, SEEK_SET);
-	_fread_nolock_s(&realsize, sizeof(uint64_t), sizeof(uint64_t), 1, fp);	// 先頭8バイトでファイルの実際のサイズがわかる
+	_fread_nolock_s(&realsize, sizeof(DataInt), sizeof(DataInt), 1, fp);	// 先頭8バイトでファイルの実際のサイズがわかる
 	fclose(fp);
 }
 
@@ -100,14 +107,22 @@ void vlc::rio::RichIO::WriteBinary(FileInfo & info, FILE * fp)
 	CheckOverSize(fp);	// 内部サイズがファイルサイズを超えたらファイルの容量を増やす
 
 	_fseeki64_nolock(fp, realsize, SEEK_SET);
-	_fwrite_nolock(info.binary, info.size, 1, fp);
+	_fwrite_nolock(info.buffer, info.size, 1, fp);
 }
 
 // ファイル先頭の内部容量に書き込む
 void vlc::rio::RichIO::WriteRealSize(FILE * fp)
 {
 	_fseeki64_nolock(fp, 0, SEEK_SET);;
-	_fwrite_nolock(&realsize, sizeof(uint64_t), 1, fp);
+	_fwrite_nolock(&realsize, sizeof(DataInt), 1, fp);
+}
+
+// ファイルから適当なバイナリをbufferへ読み込む
+void vlc::rio::RichIO::ReadBinary(FileInfo & info, FILE * fp)
+{
+	info.buffer = malloc(info.size);
+	_fseeki64_nolock(fp, info.offset, SEEK_SET);
+	_fread_nolock_s(info.buffer, info.size, info.size, 1, fp);
 }
 
 void vlc::rio::RichIO::Write(FileInfo & info)
@@ -139,12 +154,17 @@ void vlc::rio::RichIO::Read(FileInfo & info)
 {
 	FILE* fp = GetFileOne(info, "rb");
 
+	ReadBinary(info, fp);	// bufferにメモリが確保されるので注意
+
 	fclose(fp);
 }
 
 void vlc::rio::RichIO::Read(FileInfoArray & infos)
 {
 	FILE* fp = GetFileMany(infos, "rb");
+
+	for (auto& info : infos)	// bufferにメモリが確保される
+		ReadBinary(info, fp);
 
 	fclose(fp);
 }
