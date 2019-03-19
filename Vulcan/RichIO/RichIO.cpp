@@ -73,10 +73,31 @@ vlc::rio::RichIO::RichIO(const std::string path)
 	buffer = malloc(bufsize);
 }
 
+void vlc::rio::RichIO::Write(FileInfo & info)
+{
+	FILE* fp = GetFileOne(info, "ab");
+
+	fclose(fp);
+}
+
+
+void vlc::rio::RichIO::Write(FileInfoArray & infos)
+{
+	FILE* fp = GetFileMany(infos, "ab");
+
+	fclose(fp);
+}
 
 void vlc::rio::RichIO::Read(FileInfo & info)
 {
 	FILE* fp = GetFileOne(info, "rb");
+
+	fclose(fp);
+}
+
+void vlc::rio::RichIO::Read(FileInfoArray & infos)
+{
+	FILE* fp = GetFileMany(infos, "rb");
 
 	fclose(fp);
 }
