@@ -128,6 +128,7 @@ void vlc::rio::RichIO::ReadBinary(FileInfo & info, FILE * fp)
 	_fread_nolock_s(info.buffer, info.size, info.size, 1, fp);
 }
 
+// 単数ファイルの書き込み
 void vlc::rio::RichIO::Write(FileInfo & info)
 {
 	FILE* fp = GetFileOne(info, "ab");
@@ -140,6 +141,7 @@ void vlc::rio::RichIO::Write(FileInfo & info)
 	fclose(fp);
 }
 
+// 複数ファイルの書き込み
 void vlc::rio::RichIO::Write(FileInfoArray & infos)
 {
 	FILE* fp = GetFileMany(infos, "ab");
@@ -153,6 +155,7 @@ void vlc::rio::RichIO::Write(FileInfoArray & infos)
 	fclose(fp);
 }
 
+// 単数ファイルの読み込み
 void vlc::rio::RichIO::Read(FileInfo & info)
 {
 	FILE* fp = GetFileOne(info, "rb");
@@ -162,6 +165,7 @@ void vlc::rio::RichIO::Read(FileInfo & info)
 	fclose(fp);
 }
 
+// 複数ファイルの読み込み
 void vlc::rio::RichIO::Read(FileInfoArray & infos)
 {
 	FILE* fp = GetFileMany(infos, "rb");
