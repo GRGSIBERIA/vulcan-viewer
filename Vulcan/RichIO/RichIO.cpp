@@ -1,4 +1,5 @@
 ﻿#include "RichIO.h"
+#include <algorithm>
 using namespace vlc::rio;
 
 vlc::rio::FileInfo::FileInfo(void* buffer, const DataInt offset, const DataInt size)
@@ -22,6 +23,14 @@ FileInfo & vlc::rio::FileInfo::operator=(FileInfo & info)
 	buffer = info.buffer;
 	offset = info.offset;
 	size = info.size;
+	id = info.id;
+	sortMode = info.sortMode;
+}
+
+bool vlc::rio::FileInfo::operator<(const FileInfo & info) const
+{
+	// sortMode == true -> id順、sortMode == false -> offset順
+	return sortMode ? id < info.id : offset < info.offset;
 }
 
 FileInfo vlc::rio::FileInfo::ToWrite(void * buffer, const DataInt size)
@@ -117,7 +126,7 @@ void vlc::rio::RichIO::WriteRealSize(FILE * fp)
 	_fwrite_nolock(&realsize, sizeof(DataInt), 1, fp);
 }
 
-// ファイルから適当なバイナリをbufferへ読み込む
+// 適当な領域に内部データを書き込む
 void vlc::rio::RichIO::ReadBinary(FileInfo & info, FILE * fp)
 {
 	if (info.offset + info.size > realsize)
@@ -168,12 +177,21 @@ void vlc::rio::RichIO::Read(FileInfo & info)
 // 複数ファイルの読み込み
 void vlc::rio::RichIO::Read(FileInfoArray & infos)
 {
-	FILE* fp = GetFileMany(infos, "rb");
+	// シーケンシャルリードするために準備する
+	for (DataInt i = 0; i < infos.size(); ++i)
+		infos[i].id = i;
+	std::sort(infos.begin(), infos.end());
 
+	// 内部データからファイルを読み込み
+	FILE* fp = GetFileMany(infos, "rb");
 	for (auto& info : infos)	// bufferにメモリが確保される
 		ReadBinary(info, fp);
-
 	fclose(fp);
+
+	// シーケンシャルリードが終わったのでID順に並び替える
+	for (DataInt i = 0; i < infos.size(); ++i)
+		infos[i].sortMode = true;
+	std::sort(infos.begin(), infos.end());
 }
 
 vlc::rio::ReadingOverloadException::ReadingOverloadException(const FileInfo & info, const DataInt total)

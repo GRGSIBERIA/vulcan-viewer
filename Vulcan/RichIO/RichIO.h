@@ -8,7 +8,8 @@ namespace vlc
 {
 	namespace rio
 	{
-		struct FileInfo;
+		class FileInfo;
+		class RichIO;
 
 		typedef std::vector<FileInfo> FileInfoArray;
 		typedef std::vector<void*> BinrayArray;
@@ -28,11 +29,18 @@ namespace vlc
 		* ファイル情報を扱うための構造体
 		* 64ビットを想定している
 		*/
-		struct FileInfo
+		class FileInfo
 		{
-			void* buffer;	// バイナリへのポインタ
-			DataInt offset;	// オフセット
+			friend RichIO;
+			
+			DataInt id;			// 配列上のID
+			bool sortMode;		// ソートするときにtrueはID順, falseはオフセット順
+
+		public:
+			void* buffer;		// バイナリへのポインタ
+			DataInt offset;		// オフセット
 			DataInt size;		// サイズ
+			
 
 			FileInfo(void* buffer, const DataInt offset, const DataInt size);
 
@@ -40,6 +48,7 @@ namespace vlc
 			~FileInfo();
 
 			FileInfo& operator=(FileInfo& info);
+			bool operator<(const FileInfo& info) const;
 
 			static FileInfo ToWrite(void* buffer, const DataInt size);
 
