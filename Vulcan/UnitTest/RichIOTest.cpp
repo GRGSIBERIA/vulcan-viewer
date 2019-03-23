@@ -3,13 +3,13 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace UnitTest
-{		
-	TEST_CLASS(UnitTest1)
+namespace RichIOTest
+{
+	TEST_CLASS(RichIOTest)
 	{
 	public:
-		
-		TEST_METHOD(TestMethod1)
+
+		TEST_METHOD(TestMethodExample)
 		{
 			// TODO: テスト コードをここに挿入します
 		}
